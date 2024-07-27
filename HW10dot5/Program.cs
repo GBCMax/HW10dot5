@@ -1,4 +1,6 @@
 ﻿using HW10dot5;
+using HW10dot5.Enums;
+using HW10dot5.Log;
 using Microsoft.Extensions.DependencyInjection;
 
 internal class Program
@@ -7,20 +9,23 @@ internal class Program
   private static void Main(string[] args)
   {
     var services = new ServiceCollection()
-      .AddTransient<ICalculator, Calculator>();
+      .AddTransient<ICalculator, Calculator>()
+      .AddSingleton<ILogger, Logger>();
 
     using var serviceProvider = services.BuildServiceProvider();
 
     var calculator = serviceProvider.GetRequiredService<ICalculator>();
 
-    var numbers = EnterNumbers(_countNumbers);
+    var logger = serviceProvider.GetRequiredService<ILogger>();
 
-    Console.WriteLine("Сумма чисел:");
+    var numbers = EnterNumbers(_countNumbers, logger);
 
-    Console.WriteLine(calculator.Sum(numbers[0], numbers[1]));
+    logger.Info(message: "Сумма чисел:", typeOfText: TypeOfText.Message);
+
+    logger.Info(message: calculator.Sum(numbers[0], numbers[1]).ToString(), typeOfText: TypeOfText.Message);
   }
 
-  private static List<double> EnterNumbers(int countNumbers)
+  private static List<double> EnterNumbers(int countNumbers, ILogger logger)
   {
     List<double> numbers = [];
 
@@ -30,39 +35,39 @@ internal class Program
 
       while (isCorrect != true)
       {
-        Console.Write($"Введите {i + 1}-е число:");
+        logger.Info(message: $"Введите {i + 1}-е число:", typeOfText: TypeOfText.Message);
 
         var number = Console.ReadLine();
 
         try
         {
-          Console.WriteLine($"Конвертируем {number}...");
+          logger.Info(message: $"Конвертируем {number}...", typeOfText: TypeOfText.Message);
 
           double convertedNumber = Convert.ToDouble(number);
 
           numbers.Add(convertedNumber);
 
-          Console.WriteLine($"Успешно");
+          logger.Info(message: $"Успешно", typeOfText: TypeOfText.Message);
 
           isCorrect = true;
         }
         catch (FormatException ex)
         {
-          Console.WriteLine(ex.Message);
+          logger.Info(message: ex.Message, typeOfText: TypeOfText.Error);
         }
         catch (OverflowException ex)
         {
-          Console.WriteLine(ex.Message);
+          logger.Info(message: ex.Message, typeOfText: TypeOfText.Error);
         }
         catch (Exception)
         {
-          Console.WriteLine("Непредвиденная ошибка");
+          logger.Info(message: "Непредвиденная ошибка", typeOfText: TypeOfText.Error);
 
           throw new Exception("Непредвиденная ошибка");
         }
         finally
         {
-          Console.WriteLine($"Конец блока конвертации");
+          logger.Info($"Конец блока конвертации", typeOfText: TypeOfText.Message);
         }
       }
     }
